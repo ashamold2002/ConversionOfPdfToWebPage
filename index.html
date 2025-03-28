@@ -7,17 +7,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Center content vertically */
             text-align: center;
             padding: 20px;
-            margin: 0;
         }
 
         .container {
-            max-width: 800px;
-            margin: auto;
+            max-width: 600px;
+            width: 100%;
             background: white;
             padding: 20px;
             border-radius: 10px;
@@ -35,6 +44,8 @@
             border-radius: 5px;
             background: white;
             cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
         }
 
         button {
@@ -46,7 +57,7 @@
             cursor: pointer;
             font-size: 16px;
             transition: 0.3s;
-            margin-top: 10px;
+            width: 100%;
         }
 
         button:hover {
@@ -60,7 +71,7 @@
             border-radius: 5px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
             margin-top: 20px;
-            max-height: 500px;
+            max-height: 300px;
             overflow-y: auto;
         }
 
@@ -93,6 +104,15 @@
 
         #downloadBtn {
             display: none;
+            margin-top: 10px;
+        }
+
+        footer {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
         }
     </style>
 </head>
@@ -104,6 +124,7 @@
         <button onclick="convertPDF()">Convert & Preview</button>
         <div id="preview"></div>
         <button id="downloadBtn" onclick="downloadHTML()">Download Web Page</button>
+        <footer>Developed by <strong>Asha mol</strong></footer>
     </div>
 
     <script>
@@ -172,7 +193,7 @@
                         let page = await pdf.getPage(pageNum);
                         let textContent = await page.getTextContent();
 
-                        htmlContent += `<div class="section"><h3>Page ${pageNum}</h3><p>`;
+                        htmlContent += `<div class="section"><h3>Section ${pageNum}</h3><p>`;
                         textContent.items.forEach(textItem => {
                             htmlContent += textItem.str + " ";
                         });
@@ -197,6 +218,7 @@
                         htmlContent += `</div>`;
                     }
 
+                    htmlContent += `<footer>Developed by <strong>Your Name</strong></footer>`;
                     htmlContent += `</body></html>`;
 
                     document.getElementById("preview").innerHTML = htmlContent;
