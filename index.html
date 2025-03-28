@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Web Page Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #007BFF;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            border: 2px solid #007BFF;
+            border-radius: 5px;
+            background: white;
+            cursor: pointer;
+        }
+
+        button {
+            background: #007BFF;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #preview {
+            text-align: left;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .section h3 {
+            color: #007BFF;
+            margin-bottom: 10px;
+        }
+
+        .section p {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .image {
+            width: 100%;
+            height: auto;
+            margin-top: 10px;
+            border-radius: 5px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #downloadBtn {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Convert PDF to Web Page</h2>
+        <input type="file" id="pdfUpload" accept="application/pdf">
+        <button onclick="convertPDF()">Convert & Preview</button>
+        <div id="preview"></div>
+        <button id="downloadBtn" onclick="downloadHTML()">Download Web Page</button>
+    </div>
+
+    <script>
+        async function convertPDF() {
+            let fileInput = document.getElementById('pdfUpload');
+            if (!fileInput.files.length) {
+                alert("Please select a PDF file!");
+                return;
+            }
+
+            let file = fileInput.files[0];
+            let reader = new FileReader();
+
+            reader.onload = async function () {
+                let typedArray = new Uint8Array(this.result);
+                try {
+                    let pdf = await pdfjsLib.getDocument(typedArray).promise;
+                    let htmlContent = `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Converted PDF</title>
+                        <style>
+                            body {
+                                font-family: 'Poppins', sans-serif;
+                                background-color: #f9f9f9;
+                                color: #333;
+                                text-align: center;
+                                margin: 0;
+                                padding: 20px;
+                            }
+
+                            .section {
+                                margin-bottom: 20px;
+                                padding: 20px;
+                                background: white;
+                                border-radius: 8px;
+                                box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+                                text-align: left;
+                            }
+
+                            .section h3 {
+                                color: #007BFF;
+                            }
+
+                            .section p {
+                                font-size: 16px;
+                                line-height: 1.6;
+                            }
+
+                            .image {
+                                width: 100%;
+                                height: auto;
+                                margin-top: 10px;
+                                border-radius: 5px;
+                                box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+                            }
+                        </style>
+                    </head>
+                    <body>
+                    `;
+
+                    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                        let page = await pdf.getPage(pageNum);
+                        let textContent = await page.getTextContent();
+
+                        htmlContent += `<div class="section"><h3>Page ${pageNum}</h3><p>`;
+                        textContent.items.forEach(textItem => {
+                            htmlContent += textItem.str + " ";
+                        });
+                        htmlContent += `</p>`;
+
+                        let canvas = document.createElement("canvas");
+                        let context = canvas.getContext("2d");
+                        let viewport = page.getViewport({ scale: 1.5 });
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+
+                        let renderContext = {
+                            canvasContext: context,
+                            viewport: viewport
+                        };
+
+                        await page.render(renderContext).promise;
+
+                        let imageDataURL = canvas.toDataURL("image/png");
+                        htmlContent += `<img src="${imageDataURL}" class="image" alt="Section ${pageNum} Image">`;
+
+                        htmlContent += `</div>`;
+                    }
+
+                    htmlContent += `</body></html>`;
+
+                    document.getElementById("preview").innerHTML = htmlContent;
+                    window.generatedHTML = htmlContent;
+                    document.getElementById("downloadBtn").style.display = "block";
+
+                } catch (error) {
+                    console.error("PDF.js Error:", error);
+                    alert("Failed to process PDF. Check console for details.");
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function downloadHTML() {
+            let blob = new Blob([window.generatedHTML], { type: "text/html" });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "converted_webpage.html";
+            link.click();
+        }
+    </script>
+
+</body>
+</html>
